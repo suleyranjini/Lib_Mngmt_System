@@ -71,8 +71,8 @@ class User:
 
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return present
     
     
@@ -104,8 +104,8 @@ class User:
                 ins_query="INSERT INTO LIBRARIAN(NAME,PASSWORD,PH_NO,EMAIL) VALUES(%s,%s,%s,%s)"
                 args=(user_name,pwd,ph_no,email)
             else:
-                ins_query="INSERT INTO USERS(NAME,PASSWORD,PH_NO,EMAIL,FEES) VALUES(%s,%s,%s,%s,%s)"
-                args=(user_name,pwd,ph_no,email,0)
+                ins_query="INSERT INTO USERS(NAME,PASSWORD,PH_NO,EMAIL) VALUES(%s,%s,%s,%s)"
+                args=(user_name,pwd,ph_no,email)
             #args=(user_name,pwd,ph_no,email)
             self.curObj.execute(ins_query,args)
             id=self.curObj.lastrowid
@@ -113,8 +113,8 @@ class User:
             status=True
         except Error as e:
             print(e)    
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,id
 
 
@@ -133,8 +133,8 @@ class User:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,user_id
 
     
@@ -152,8 +152,8 @@ class User:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,user_id
     
     
@@ -171,8 +171,8 @@ class User:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,user_id
     
     def update_fees(self,flg,user_id,fees):
@@ -185,8 +185,8 @@ class User:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,user_id
     
     def list_user(self):
@@ -205,8 +205,8 @@ class User:
                 print("There are no users to display")
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return
     
     def delete_user(self,user_id):
@@ -219,8 +219,8 @@ class User:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,user_id    
 
 class Book:
@@ -234,8 +234,7 @@ class Book:
     def check_book_exists(self,book_name='', author='',book_id=0):
         present=False
         stock=0
-        rent_user_id=0
-        rent_date=''
+
         try:
             
             if book_id==0:
@@ -249,17 +248,15 @@ class Book:
             rows=self.curObj.fetchone()
             if rows:
                 book_id=rows[0]
-                rent_date=rows[4]
-                rent_user_id=rows[5]
-                stock=rows[6]
+                stock=rows[4]
                 present=True 
         except Error as e:
             print(e)
         
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         #print(f"Book id {book_id}, rent date {rent_date}, rent user {rent_user_id}, stock {stock}")
-        return present,stock,book_id,rent_date,rent_user_id
+        return present,stock,book_id
     
     
     def insert_book(self,book_name, author, pubcomp):
@@ -273,8 +270,8 @@ class Book:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
     
     def update_stock(self,book_id,stock):
@@ -287,8 +284,8 @@ class Book:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
     
     def list_book(self):
@@ -299,7 +296,7 @@ class Book:
             rows=self.curObj.fetchall()
             if rows:
                 for row in rows:
-                    print("(Book ID,Book Name,Author,Publication Co,Rented User,Rented Date,Stock)")
+                    print("(Book ID,Book Name,Author,Publication Co,Stock)")
                     print()
                     print(row)
             else:
@@ -307,10 +304,53 @@ class Book:
         
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return
     
+    def list_book_user(self,user_id):
+ 
+        try:
+            
+            query="SELECT BU.BOOK_ID, BOOK_NAME, BU.RENTED_USER_ID, NAME, BU.RENTED_DATE FROM BOOK_USER BU \
+                    INNER JOIN BOOKS B ON BU.BOOK_ID=B.BOOK_ID \
+                    INNER JOIN USERS U ON BU.RENTED_USER_ID=U.ID \
+                    WHERE BU.STATUS=0 AND BU.RENTED_USER_ID= %s"
+            args=(user_id,)
+            self.curObj.execute(query,args)
+            rows=self.curObj.fetchall()
+            if rows:
+                print("[Book ID,Book Name,Rented User ID,Rented User,Rented Date]")
+                print()
+                for row in rows:
+                    print(row)
+                    
+            
+        except Error as e:
+            print(e)
+        return
+
+    def return_book_user(self,user_id,book_id):
+        status=False
+        rent_date=None
+        
+        try:
+            
+            query="SELECT BU.BOOK_ID, BOOK_NAME, BU.RENTED_USER_ID, NAME, BU.RENTED_DATE FROM BOOK_USER BU \
+                    INNER JOIN BOOKS B ON BU.BOOK_ID=B.BOOK_ID \
+                    INNER JOIN USERS U ON BU.RENTED_USER_ID=U.ID \
+                    WHERE BU.STATUS=0 AND BU.RENTED_USER_ID= %s AND BU.BOOK_ID = %s"
+            args=(user_id,book_id)
+            self.curObj.execute(query,args)
+            rows=self.curObj.fetchone()
+            if rows:
+                rent_date=rows[4]
+                status=True
+            
+        except Error as e:
+            print(e)
+        return status,rent_date
+
     def update_book_name(self,book_id,book_name):
         status=False
         try:
@@ -321,8 +361,8 @@ class Book:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
     
     def update_author(self,book_id,author):
@@ -335,8 +375,8 @@ class Book:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
 
     def update_pubcomp(self,book_id,pubcomp):
@@ -349,8 +389,8 @@ class Book:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
     
     def delete_book(self,book_id):
@@ -364,35 +404,36 @@ class Book:
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
     
-    def update_rented_user(self,book_id,rent_user):
+    def insert_rented_user(self,book_id,rent_user,rent_date):
         status=False
         try:
-            upd_query="UPDATE BOOKS SET RENTED_USER_ID = %s WHERE BOOK_ID = %s"
-            args=(rent_user,book_id)
-            self.curObj.execute(upd_query,args)
+            
+            ins_query="INSERT INTO BOOK_USER(BOOK_ID,RENTED_USER_ID,RENTED_DATE) VALUES (%s,%s,%s)"
+            args=(book_id,rent_user,rent_date)
+            self.curObj.execute(ins_query,args)
             self.connObj.commit()
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+        #self.curObj.close()
+        #self.connObj.close()
         return status,book_id
      
-    def update_rented_date(self,book_id,rent_date):
+    def update_return_date(self,book_id,user_id,return_date,final_fee):
+
         status=False
         try:
-            upd_query="UPDATE BOOKS SET RENTED_DATE = %s WHERE BOOK_ID = %s"
-            args=(rent_date,book_id)
+            upd_query="UPDATE BOOK_USER SET RETURN_DATE = %s, STATUS = 1, FEES = %s WHERE BOOK_ID = %s AND RENTED_USER_ID = %s AND STATUS = 0"
+            args=(return_date,final_fee,book_id,user_id)
             self.curObj.execute(upd_query,args)
             self.connObj.commit()
             status = True
         except Error as e:
             print(e)
-        self.curObj.close()
-        self.connObj.close()
+
         return status,book_id
     
